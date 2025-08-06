@@ -73,12 +73,19 @@ def get_async_w3(w3: Web3) -> Web3:
     else:
         provider = AsyncHTTPProvider(endpoint, request_kwargs)
 
-    # In older web3 versions, AsyncHTTPProvider objects come
-    # with incompatible synchronous middlewares by default.
-    if AsyncWeb3:  # type: ignore [truthy-function]
-        async_w3 = AsyncWeb3(provider=provider, middlewares=[])  # type: ignore [call-arg]
+    if AsyncWeb3:
+        try:
+            # Try using 'middleware' (newer versions)
+            async_w3 = AsyncWeb3(provider=provider, middleware=[])
+        except TypeError:
+            # Fallback to 'middlewares' (older versions)
+            async_w3 = AsyncWeb3(provider=provider, middlewares=[])
     else:
-        async_w3 = Web3(provider=provider, middlewares=[])
+        try:
+            # Try using 'middleware' (newer versions)
+            async_w3 = Web3(provider=provider, middleware=[])
+        except TypeError:
+            async_w3 = Web3(provider=provider, middlewares=[])
         async_w3.eth = AsyncEth(async_w3)
 
     async_w3s[w3] = async_w3  # type: ignore [assignment]
